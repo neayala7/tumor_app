@@ -1,7 +1,7 @@
 import streamlit as st
 import numpy as np
 from PIL import Image
-from keras.models import load_model
+from tensorflow.keras.models import load_model
 
 # -------------------------
 # CONFIG
@@ -48,7 +48,7 @@ st.markdown("---")
 # -------------------------
 @st.cache_resource
 def load_my_model():
-    return load_model("model_brain_tumor.h5", compile=False)
+    return load_model("model_brain_tumor.keras", compile=False)
 
 model = load_my_model()
 
