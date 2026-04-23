@@ -44,13 +44,18 @@ st.markdown('<p class="subtitle">Clasificación automática con Deep Learning</p
 st.markdown("---")
 
 # -------------------------
-# LOAD MODEL
+# LOAD MODEL (.h5)
 # -------------------------
 @st.cache_resource
 def load_my_model():
-    return load_model("model_brain_tumor.keras", compile=False)
+    return load_model("model_brain_tumor.h5", compile=False)
 
-model = load_my_model()
+# Manejo de error para evitar crash
+try:
+    model = load_my_model()
+except Exception as e:
+    st.error(f"❌ Error cargando modelo: {e}")
+    model = None
 
 class_names = ['glioma', 'meningioma', 'notumor', 'pituitary']
 
@@ -71,28 +76,38 @@ with col2:
     st.subheader("🤖 Resultado")
 
     if uploaded_file:
-        img = image.resize((224, 224))
-        img = np.array(img)
 
-        if img.shape[-1] == 4:
-            img = img[:, :, :3]
+        if model is None:
+            st.warning("⚠️ Modelo no disponible, mostrando predicción simulada")
 
-        img = img / 255.0
-        img = np.expand_dims(img, axis=0)
+            import random
+            clases = ["Glioma", "Meningioma", "No Tumor", "Pituitary"]
+            pred_fake = random.choice(clases)
 
-        pred = model.predict(img)
-        clase = class_names[np.argmax(pred)]
-        conf = np.max(pred)
+            st.success(f"Predicción: {pred_fake}")
+        else:
+            img = image.resize((224, 224))
+            img = np.array(img)
 
-        st.markdown('<div class="result-box">', unsafe_allow_html=True)
-        st.markdown(f"### 🧾 {clase.upper()}")
-        st.write(f"Confianza: {conf:.2%}")
-        st.progress(float(conf))
-        st.markdown('</div>', unsafe_allow_html=True)
+            if img.shape[-1] == 4:
+                img = img[:, :, :3]
 
-        st.markdown("### 📊 Probabilidades")
-        for i, c in enumerate(class_names):
-            st.write(f"{c}: {pred[0][i]:.2%}")
+            img = img / 255.0
+            img = np.expand_dims(img, axis=0)
+
+            pred = model.predict(img)
+            clase = class_names[np.argmax(pred)]
+            conf = np.max(pred)
+
+            st.markdown('<div class="result-box">', unsafe_allow_html=True)
+            st.markdown(f"### 🧾 {clase.upper()}")
+            st.write(f"Confianza: {conf:.2%}")
+            st.progress(float(conf))
+            st.markdown('</div>', unsafe_allow_html=True)
+
+            st.markdown("### 📊 Probabilidades")
+            for i, c in enumerate(class_names):
+                st.write(f"{c}: {pred[0][i]:.2%}")
 
 # -------------------------
 # SIDEBAR
@@ -115,6 +130,6 @@ st.markdown("---")
 st.markdown("""
 <p style='text-align:center;color:gray'>
 🧠 Proyecto de Ciencia de Datos<br>
-© 2026 Nadia Ayala
+© 2026 Nadia Ayala - Todos los derechos reservados
 </p>
 """, unsafe_allow_html=True)
